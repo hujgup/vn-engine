@@ -1,0 +1,142 @@
+<?xml version="1.0" ?>
+<visualNovel>
+	<env>
+		<title>Opening Day</title>
+		<canvas width="30" height="20" fontSize="1.2" saveText="Save Progress" accelText="Skip Text" nextText="==&gt;" />
+		<styling>
+			<default color="white" bgColor="black" linkColor="blue" bold="1" italics="0" baseDelay="33" lineDelay="800">
+				<delay chars="," time="100" />
+				<delay chars=";:" time="250" />
+				<delay chars=".!?" time="400" />
+			</default>
+			<class id="ins" baseDelay="0" lineDelay="0" />
+			<class id="nld" lineDelay="33" />
+			<class id="i" italics="1" />
+			<class id="i-nld" parent="nld" italics="1" />
+			<class id="line2x" lineDelay="1600" />
+			<class id="john" color="#0715cd" />
+			<class id="karkat" color="#626262" />
+			<class id="nld-jn" parent="john" lineDelay="33" />
+			<class id="nld-kk" parent="karkat" lineDelay="33" />
+			<class id="i-nld-jn" parent="i-nld" color="#0715cd" />
+			<class id="i-nld-kk" parent="i-nld" color="#626262" />
+		</styling>
+	</env>
+	<flow>
+		<block x="1" y="1">
+			<text>
+				<block class="nld">
+					<line>#################</line>
+					<line>## OPENING DAY ##</line>
+					<line>#################</line>
+				</block>
+				<line />
+				<line>By Mod E</line>
+				<line />
+				<block class="nld">
+					<line>To save your progress, click "Save</line>
+					<line>Progress" and copy the page's new</line>
+					<line>URL somewhere. Use that URL when</line>
+					<line>you want to load your game.</line>
+				</block>
+				<line />
+				<line class="nld">Click the arrow to begin.</line>
+			</text>
+			<user />
+			<wait>3500</wait>
+			<text>
+				<block class="nld">
+					<line>You wake up to the feeling of</line>
+					<line>someone shaking your body back-</line>
+				</block>
+				<line>and-forth.</line>
+				<line class="ins" />
+				<block class="john">
+					<line>Hey! Wake up!</line>
+					<line>Karkat, it's time to go!</line>
+				</block>
+			</text>
+			<user />
+			<text>
+				<line>Uuuuurghhhh...</line>
+				<block class="nld">
+					<line>Why. Why is this happening to you.</line>
+					<line>You were enjoying sleeping! For</line>
+					<line>once, you weren't having a</line>
+					<line>horrible nightmare from the lack</line>
+					<line>of soper slime. But no. John</line>
+					<line><span class="i">fucking</span> Egbert had to come in and</line>
+					<line>completely <span class="i">ruin it.</span></line>
+				</block>
+			</text>
+			<user />
+			<text class="karkat">
+				<block class="nld-kk">
+					<line>John, I love you, so I'm giving</line>
+					<line>you a warning: let go of me <span class="i-nld-kk">this</span></line>
+					<line><span class="i-nld-kk">instant</span> or your puny human body</line>
+					<line>will become <span class="i-nld-kk">intimately acquanted</span></line>
+					<line>with my claws. And believe me, it</line>
+					<line>will <span class="i-nld-kk">not</span> be pretty.</line>
+				</block>
+			</text>
+			<user />
+			<text>
+				<block class="nld">
+					<line>Your matesprit, in a rare and</line>
+					<line>stunning display of rational</line>
+					<line>thinking, abides by your warning</line>
+					<line>and removes his mitts from you.</line>
+				</block>
+				<line />
+				<block class="nld-jn">
+					<line>Karkat, don't you remember what</line>
+					<line>today is?</line>
+				</block>
+				<line />
+				<block class="nld-kk">
+					<line>John. Please. Fuck off.</line>
+				</block>
+			</text>
+			<user />
+			<text>
+				<block class="nld-jn">
+					<line>Well fine! I guess I'll just go to</line>
+					<line>the <span class="i-nld-jn">grand opening</span> of the new</line>
+					<line>Cosmagic store by myself then!</line>
+				</block>
+				<line />
+				<line class="line2x">Wait.</line>
+				<line>What did he just say?</line>
+			</text>
+			<user />
+			<text>
+				<line class="nld">Ohhh fuck, that's <span class="i">today?</span></line>
+				<line />
+				<line class="nld">Shit. You need to get moving.</line>
+				<line />
+				<block class="nld">
+					<line>You quickly pull yourself out of</line>
+					<line>bed, throwing the dooner off of</line>
+					<line>you. You end up tossing it</line>
+					<line>directly at John, which earns you</line>
+<!--                                          xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -->
+					<line>some startled noises from him, but</line>
+					<line>you're not paying attention. You</line>
+					<line>need to <span class="i">get ready.</span></line>
+				</block>
+			</text>
+<!-- max chars per line = 34 -->
+<!-- max lines per text block = 12 -->
+		</block>
+	</flow>
+<!--
+story outline:
+john and karkat go to a newly-opened cosmagic super-store
+they explore around it and find other people getting tf'd into stuff
+in typical cosmagic fashion, karkat blunders into getting tf'd
+he turns into a buttplug, imbied with the power to make his wearer never need to poop again
+john inserts him, and never takes him out again
+-->
+</visualNovel>
+
