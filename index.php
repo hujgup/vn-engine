@@ -9,6 +9,6 @@
 	<script src="engine/script.js"></script>
 </head>
 <body>
-	<p>Loading...</p>
+	<p>Loading engine...</p>
 </body>
 </html>

@@ -1,8 +1,3 @@
-function inherit(child,parent) {
-	child.prototype = Object.create(parent.prototype);
-	child.prototype.constructur = child;
-}
-
 function DOMVisitor(root,visitRoot) {
 	var _frame = function(node,callback,thisArg) {
 		for (var i = 0; i < node.childNodes.length; i++) {
@@ -37,24 +32,25 @@ TextDelayRule.parse = function(node) {
 	return new TextDelayRule(decodeEntities(node.getAttribute("chars")).split(""),parseInt(node.getAttribute("time")));
 };
 
-function TextDelay(baseTime,lineTime) {
-	var _rules = [];
-	this.base = baseTime;
-	this.line = lineTime;
-	this.getRules = function() {
-		return _rules;
-	};
-	this.addRule = function(rule) {
-		_rules.push(rule);
-	};
-	this.concatRules = function(rules) {
-		_rules = _rules.concat(rules);
+var styleSchema = new CascadingSchema();
+styleSchema.setField("color",SchemaType.STRING);
+styleSchema.setField("bgColor",SchemaType.STRING);
+styleSchema.setField("linkColor",SchemaType.STRING);
+styleSchema.setField("bold",SchemaType.BOOLEAN);
+styleSchema.setField("italics",SchemaType.BOOLEAN);
+styleSchema.setField("baseDelay",NumericSchemaType.INT_NON_NEGATIVE);
+styleSchema.setField("lineDelay",NumericSchemaType.INT_NON_NEGATIVE);
+styleSchema.setField("delayRules",SchemaType.ARRAY);
+
+function StyleClass(id,parent) {
+	this.concatDelayRules = function(rules) {
+		this.delayRules = this.delayRules.concat(rules);
 	};
 	this.getDelay = function(text,playhead) {
 		text = text[playhead];
 		var res = null;
 		var passed;
-		_rules.some(function(rule) {
+		this.delayRules.some(function(rule) {
 			passed = rule.chars.indexOf(text) !== -1;
 			if (passed) {
 				res = rule.time;
@@ -62,86 +58,82 @@ function TextDelay(baseTime,lineTime) {
 			return passed;
 		});
 		if (res === null) {
-			res = this.base;
+			res = this.baseDelay;
 		}
 		return res;
 	};
-}
-
-function StyleClass(id,color,bgColor,linkColor,bold,italics,textDelay) {
 	this.id = id;
-	this.color = color;
-	this.bgColor = bgColor;
-	this.linkColor = linkColor;
-	this.bold = bold;
-	this.italics = italics;
-	this.textDelay = textDelay;
+	CascadingObject.call(this,styleSchema,parent);
 }
-StyleClass.attrNameToField = function(sc,attrName) {
-	switch (attrName) {
-		case "baseDelay":
-			return sc.textDelay.base;
-		case "lineDelay":
-			return sc.textDelay.line;
-		default:
-			return sc[attrName];
+StyleClass.updateKey = function(classDef,res,attrName,key) {
+	var value = classDef.getAttribute(attrName);
+	if (value !== null) {
+		res.setFieldIfDifferent(typeof key !== "undefined" ? key : attrName,value);
 	}
 };
-StyleClass.getAttr = function(classDef,attrName,parent) {
-	var res = classDef.getAttribute(attrName);
-	if (res === null) {
-		if (parent === null) {
-			throw new Error("Default styling must specify attribute \""+attrName+"\".");
-		} else {
-			res = StyleClass.attrNameToField(parent,attrName);
-		}
+StyleClass.updateCnvKey = function(classDef,res,cnv,attrName,key) {
+	var value = classDef.getAttribute(attrName);
+	if (value !== null) {
+		value = cnv(value);
+		res.setFieldIfDifferent(typeof key !== "undefined" ? key : attrName,value);
 	}
-	return res;
+};
+StyleClass.toBoolean = function(str) {
+	return str == "1";
 };
 StyleClass.parse = function(classDef,classes,parent) {
 	var id = classDef.getAttribute("id");
-	if (id !== null) {
+	var isDefault = id === null;
+	var parent;
+	if (isDefault) {
+		id = "default";
+		isDefault = true;
+		parent = null;
+	} else {
 		id = decodeEntities(id);
+		if (id === "default") {
+			throw new Error("Class ID \""+id+"\" is reserved.");
+		} else if (id.indexOf(" ") !== -1) {
+			throw new Error("Class ID \""+id+"\" cannot contain spaces.");
+		}
+		parent = classes.default;
 	}
 	if (classes.hasOwnProperty(id)) {
 		throw new Error("Duplicate class ID \""+id+"\".");
 	}
-	var parentAttr = classDef.getAttribute("parent");
-	if (parentAttr !== null) {
-		parentAttr = decodeEntities(parentAttr);
-		if (!classes.hasOwnProperty(parentAttr)) {
-			throw new Error("Class \""+id+"\" cannot have parent \""+parentAttr+"\" because no such parent has been defined.");
-		}
-		parent = classes[parentAttr];
-	}
-	var color = StyleClass.getAttr(classDef,"color",parent);
-	var bgColor = StyleClass.getAttr(classDef,"bgColor",parent);
-	var linkColor = StyleClass.getAttr(classDef,"linkColor",parent);
-	var bold = StyleClass.getAttr(classDef,"bold",parent) == "1";
-	var italics = StyleClass.getAttr(classDef,"italics",parent) == "1";
-	var textDelay = new TextDelay(parseInt(StyleClass.getAttr(classDef,"baseDelay",parent)),parseInt(StyleClass.getAttr(classDef,"lineDelay",parent)));
+
+	var res = new StyleClass(id,isDefault ? undefined : parent);
+	StyleClass.updateKey(classDef,res,"color");
+	StyleClass.updateKey(classDef,res,"bgColor");
+	StyleClass.updateKey(classDef,res,"linkColor");
+	StyleClass.updateCnvKey(classDef,res,StyleClass.toBoolean,"bold");
+	StyleClass.updateCnvKey(classDef,res,StyleClass.toBoolean,"italics");
+	StyleClass.updateCnvKey(classDef,res,parseInt,"baseDelay");
+	StyleClass.updateCnvKey(classDef,res,parseInt,"lineDelay");
+
 	var nodes = classDef.getElementsByTagName("delay");
-	var node;
+	var newRules = [];
 	for (var i = 0; i < nodes.length; i++) {
-		textDelay.addRule(TextDelayRule.parse(nodes[i]));
+		newRules.push(TextDelayRule.parse(nodes[i]));
 	}
-	if (parent !== null) {
-		textDelay.concatRules(parent.textDelay.getRules());
+	if (isDefault) {
+		res.delayRules = newRules;
+	} else if (newRules.length > 0) {
+		res.delayRules = newRules.concat(res.delayRules);
 	}
-	return new StyleClass(id,color,bgColor,linkColor,bold,italics,textDelay);
+	return res;
 };
 
 function Styling() {
-	this.default = null;
 	this.classes = {};
 }
 Styling.parse = function(xml,styling) {
 	var def = firstTag(xml,"default");
-	styling.default = StyleClass.parse(def,styling.classes,null);
+	styling.classes.default = StyleClass.parse(def,styling.classes,null);
 	var classDefs = xml.getElementsByTagName("class");
 	var classDef;
 	for (var i = 0; i < classDefs.length; i++) {
-		classDef = StyleClass.parse(classDefs[i],styling.classes,styling.default);
+		classDef = StyleClass.parse(classDefs[i],styling.classes,styling.classes.default);
 		styling.classes[classDef.id] = classDef;
 	}
 };
@@ -213,7 +205,7 @@ FlowNode.clearTimeouts = function() {
 function SwitchStyleFlowNode(classDef) {
 	FlowNode.call(this);
 	this.run = function(ctx,callback) {
-		console.log("[FLOW] Style switch");
+		console.log("[FLOW] Style switch: "+classDef.id);
 		ctx.styling = classDef;
 		callback();
 	};
@@ -276,7 +268,7 @@ function TextEndLineFlowNode(classDef) {
 	this.run = function(ctx,callback) {
 		console.log("[FLOW] Ending line");
 		ctx.endLine();
-		this.delayCallback(callback,classDef.textDelay.line);
+		this.delayCallback(callback,classDef.lineDelay);
 	};
 }
 inherit(TextEndLineFlowNode,TextFlowNode);
@@ -284,8 +276,10 @@ function TextSpanFlowNode(text,classDef) {
 	TextFlowNode.call(this,classDef);
 	var _drawText = function(ctx,playhead,callback,t) {
 		ctx.pushText(text[playhead]);
-		ctx.render();
-		t.delayCallback(callback,classDef.textDelay.getDelay(text,playhead));
+		if (!FlowNode.accelerate) {
+			ctx.render();
+		}
+		t.delayCallback(callback,classDef.getDelay(text,playhead));
 	};
 	var _step = function(ctx,callback,i,t) {
 		if (text.length === 0) {
@@ -311,6 +305,9 @@ function UserFlowNode() {
 	FlowNode.call(this);
 	this.run = function(ctx,callback) {
 		console.log("[FLOW] Awaiting user input...");
+		if (FlowNode.accelerate) {
+			ctx.render();
+		}
 		ctx.awaitUserInput(callback);
 	};
 	this.skip = function(ctx,skipN) {
@@ -343,7 +340,7 @@ function Flow() {
 	};
 }
 Flow.parse = function(xml,env) {
-	var currentStyle = env.styling.default;
+	var currentStyle = env.styling.classes.default;
 	var styleStack = [currentStyle];
 	var nodeStack = [null];
 	var inText = false;
@@ -369,6 +366,9 @@ Flow.parse = function(xml,env) {
 		var newVar = node.getAttribute(attr);
 		return newVar !== null ? parseInt(newVar) : peek(arr);
 	};
+	var unionCreateNew = function(a,b,parent) {
+		return new StyleClass(a.id+" "+b.id,parent);
+	};
 	visitor.run(function(node,opener) {
 		var suppress = false;
 		if (node.nodeType === Node.TEXT_NODE && opener && node.textContent.trim().length > 0) {
@@ -377,16 +377,27 @@ Flow.parse = function(xml,env) {
 			var currentNode = peek(nodeStack);
 			var classId = node.getAttribute("class");
 			var hasClass = classId !== null;
-			if (hasClass && !env.styling.classes.hasOwnProperty(classId)) {
-				throw new Error("Class \""+classId+"\" is undefined.");
+			if (hasClass && opener) {
+				var ids = decodeEntities(classId).split(" ");
+				var classes = ids.map(function(id) {
+					if (!env.styling.classes.hasOwnProperty(id)) {
+						throw new Error("Class \""+classId+"\" is undefined.");
+					}
+					return env.styling.classes[id];
+				});
+				var newStyle = CascadingObject.multiUnion(unionCreateNew,classes);
+				if (currentStyle === env.styling.classes.default) {
+					// Override
+					currentStyle = newStyle;
+				} else {
+					// Union
+					currentStyle = CascadingObject.union(unionCreateNew,currentStyle,newStyle);
+				}
+				styleStack.push(currentStyle);
+				res.nodes.push(new SwitchStyleFlowNode(currentStyle));
 			}
 			if (opener) {
 				nodeStack.push(node);
-				if (hasClass) {
-					currentStyle = env.styling.classes[decodeEntities(classId)];
-					styleStack.push(currentStyle);
-					res.nodes.push(new SwitchStyleFlowNode(currentStyle));
-				}
 			} else {
 				nodeStack.pop();
 			}
@@ -711,7 +722,7 @@ function createFrame() {
 		frame.className = "frame";
 		var innerFrame = document.createElement("div");
 			innerFrame.className = "innerFrame";
-			innerFrame.textContent = "Loading...";
+			innerFrame.textContent = "Loading novel data...";
 		frame.appendChild(innerFrame);
 	document.body.appendChild(frame);
 	return innerFrame;
@@ -736,6 +747,7 @@ function loadNovel(frame,callback) {
 		try {
 			if (res.success) {
 				var xml = (new DOMParser()).parseFromString(res.text,"application/xml");
+				frame.textContent = "Parsing novel data...";
 				callback(parseNovel(xml));
 			} else {
 				frame.style.textAlign = "left";

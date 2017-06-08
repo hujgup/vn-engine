@@ -12,14 +12,9 @@
 			<class id="ins" baseDelay="0" lineDelay="0" />
 			<class id="nld" lineDelay="33" />
 			<class id="i" italics="1" />
-			<class id="i-nld" parent="nld" italics="1" />
 			<class id="line2x" lineDelay="1600" />
 			<class id="john" color="#0715cd" />
 			<class id="karkat" color="#626262" />
-			<class id="nld-jn" parent="john" lineDelay="33" />
-			<class id="nld-kk" parent="karkat" lineDelay="33" />
-			<class id="i-nld-jn" parent="i-nld" color="#0715cd" />
-			<class id="i-nld-kk" parent="i-nld" color="#626262" />
 		</styling>
 	</env>
 	<flow>
@@ -52,8 +47,8 @@
 				<line>and-forth.</line>
 				<line class="ins" />
 				<block class="john">
-					<line>Hey! Wake up!</line>
-					<line>Karkat, it's time to go!</line>
+					<line>hey! wake up!</line>
+					<line>karkat, it's time to go!</line>
 				</block>
 			</text>
 			<user />
@@ -70,15 +65,13 @@
 				</block>
 			</text>
 			<user />
-			<text class="karkat">
-				<block class="nld-kk">
-					<line>John, I love you, so I'm giving</line>
-					<line>you a warning: let go of me <span class="i-nld-kk">this</span></line>
-					<line><span class="i-nld-kk">instant</span> or your puny human body</line>
-					<line>will become <span class="i-nld-kk">intimately acquanted</span></line>
-					<line>with my claws. And believe me, it</line>
-					<line>will <span class="i-nld-kk">not</span> be pretty.</line>
-				</block>
+			<text class="karkat nld">
+				<line>JOHN, I LOVE YOU, SO I'M GIVING</line>
+				<line>YOU A WARNING: LET GO OF ME <span class="i">THIS</span></line>
+				<line><span class="i">INSTANT</span> OR YOUR PUNY HUMAN BODY</line>
+				<line>WILL BECOME <span class="i">INTIMATELY ACQUAINTED</span></line>
+				<line>WITH MY CLAWS. AND BELIEVE ME, IT</line>
+				<line>WILL <span class="i">NOT</span> BE PRETTY.</line>
 			</text>
 			<user />
 			<text>
@@ -89,21 +82,21 @@
 					<line>and removes his mitts from you.</line>
 				</block>
 				<line />
-				<block class="nld-jn">
-					<line>Karkat, don't you remember what</line>
+				<block class="nld john">
+					<line>karkat, don't you remember what</line>
 					<line>today is?</line>
 				</block>
 				<line />
-				<block class="nld-kk">
-					<line>John. Please. Fuck off.</line>
+				<block class="nld karkat">
+					<line>JOHN. PLEASE. FUCK OFF.</line>
 				</block>
 			</text>
 			<user />
 			<text>
-				<block class="nld-jn">
-					<line>Well fine! I guess I'll just go to</line>
-					<line>the <span class="i-nld-jn">grand opening</span> of the new</line>
-					<line>Cosmagic store by myself then!</line>
+				<block class="nld john">
+					<line>well fine! i guess i'll just go to</line>
+					<line>the <span class="i">grand opening</span> of the new</line>
+					<line>cosmagic store by myself then!</line>
 				</block>
 				<line />
 				<line class="line2x">Wait.</line>
