@@ -4,13 +4,18 @@
 		<title>Opening Day</title>
 		<canvas width="30" height="20" fontSize="1.2" saveText="Save Progress" accelText="Skip Text" nextText="==&gt;" />
 		<styling>
-			<default color="white" bgColor="black" linkColor="blue" bold="1" italics="0" baseDelay="33" lineDelay="800">
-				<delay chars="," time="100" />
-				<delay chars=";:" time="250" />
-				<delay chars=".!?" time="400" />
+			<default color="#e4e4e4" bgColor="#101111" linkColor="#234bce" bold="1" italics="0" baseDelay="33" lineDelay="800">
+				<delay chars="," time="150" />
+				<delay chars=";:" time="300" />
+				<delay chars=".!?&#8253;" time="400" />
 			</default>
-			<class id="ins" baseDelay="0" lineDelay="0" />
+			<class id="ins" baseDelay="0" lineDelay="0">
+				<delay chars=",;:.!?&#8253;" time="0" />
+			</class>
 			<class id="nld" lineDelay="33" />
+			<class id="ncd">
+				<delay chars=",;:.!?&#8253;" time="33" />
+			</class>
 			<class id="i" italics="1" />
 			<class id="line2x" lineDelay="1600" />
 			<class id="john" color="#0715cd" />
@@ -19,7 +24,7 @@
 	</env>
 	<flow>
 		<block x="1" y="1">
-			<text>
+			<text ts-ignore="1">
 				<block class="nld">
 					<line>#################</line>
 					<line>## OPENING DAY ##</line>
@@ -28,7 +33,7 @@
 				<line />
 				<line>By Mod E</line>
 				<line />
-				<block class="nld">
+				<block class="nld" ts-mode="one-line">
 					<line>To save your progress, click "Save</line>
 					<line>Progress" and copy the page's new</line>
 					<line>URL somewhere. Use that URL when</line>
@@ -40,11 +45,13 @@
 			<user />
 			<wait>3500</wait>
 			<text>
-				<block class="nld">
-					<line>You wake up to the feeling of</line>
-					<line>someone shaking your body back-</line>
+				<block ts-mode="one-line">
+					<block class="nld">
+						<line>You wake up to the feeling of</line>
+						<line>someone shaking your body back-</line>
+					</block>
+					<line>and-forth.</line>
 				</block>
-				<line>and-forth.</line>
 				<line class="ins" />
 				<block class="john">
 					<line>hey! wake up!</line>
@@ -54,18 +61,18 @@
 			<user />
 			<text>
 				<line>Uuuuurghhhh...</line>
-				<block class="nld">
+				<block class="nld" ts-mode="one-line">
 					<line>Why. Why is this happening to you.</line>
 					<line>You were enjoying sleeping! For</line>
 					<line>once, you weren't having a</line>
 					<line>horrible nightmare from the lack</line>
-					<line>of soper slime. But no. John</line>
+					<line>of sopor slime. But no. John</line>
 					<line><span class="i">fucking</span> Egbert had to come in and</line>
 					<line>completely <span class="i">ruin it.</span></line>
 				</block>
 			</text>
 			<user />
-			<text class="karkat nld">
+			<text class="karkat nld" ts-mode="one-line">
 				<line>JOHN, I LOVE YOU, SO I'M GIVING</line>
 				<line>YOU A WARNING: LET GO OF ME <span class="i">THIS</span></line>
 				<line><span class="i">INSTANT</span> OR YOUR PUNY HUMAN BODY</line>
@@ -75,14 +82,14 @@
 			</text>
 			<user />
 			<text>
-				<block class="nld">
+				<block class="nld" ts-mode="one-line">
 					<line>Your matesprit, in a rare and</line>
 					<line>stunning display of rational</line>
 					<line>thinking, abides by your warning</line>
 					<line>and removes his mitts from you.</line>
 				</block>
 				<line />
-				<block class="nld john">
+				<block class="nld john" ts-mode="one-line">
 					<line>karkat, don't you remember what</line>
 					<line>today is?</line>
 				</block>
@@ -93,10 +100,10 @@
 			</text>
 			<user />
 			<text>
-				<block class="nld john">
+				<block class="nld john" ts-mode="one-line">
 					<line>well fine! i guess i'll just go to</line>
 					<line>the <span class="i">grand opening</span> of the new</line>
-					<line>cosmagic store by myself then!</line>
+					<line>cosmagic store without you then!</line>
 				</block>
 				<line />
 				<line class="line2x">Wait.</line>
@@ -108,12 +115,11 @@
 				<line />
 				<line class="nld">Shit. You need to get moving.</line>
 				<line />
-				<block class="nld">
+				<block class="nld" ts-mode="one-line">
 					<line>You quickly pull yourself out of</line>
 					<line>bed, throwing the dooner off of</line>
 					<line>you. You end up tossing it</line>
 					<line>directly at John, which earns you</line>
-<!--                                          xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -->
 					<line>some startled noises from him, but</line>
 					<line>you're not paying attention. You</line>
 					<line>need to <span class="i">get ready.</span></line>
@@ -121,6 +127,75 @@
 			</text>
 <!-- max chars per line = 34 -->
 <!-- max lines per text block = 12 -->
+			<user />
+			<text class="nld" ts-mode="one-line">
+				<line>You quickly rush through your</line>
+				<line>routine, putting on your standard</line>
+				<line>shirt, sweater, and tracksuit</line>
+				<line>pants. You vault down the stairs,</line>
+				<line>pulling yourself into the meal</line>
+				<line>block and stuffing some nuts down</line>
+				<line>your gullet. You grab your phone</line>
+				<line>off the counter, stuffing it into</line>
+				<line>your right pocket. As you reach</line>
+				<line>the door, ready to leave, you spot</line>
+				<line>John at the top of the staircase,</line>
+				<line>laughing at you.</line>
+			</text>
+			<user />
+			<text>
+				<line class="karkat">WHAT? COME ON, WE HAVE TO GO!</line>
+				<line class="nld" />
+				<block class="nld john" ts-mode="one-line">
+					<line>hehehe<span class="ncd">.</span>.. karkat, we have, like,</line>
+					<line>an hour!</line>
+				</block>
+				<line class="line2x" />
+				<line>What.</line>
+				<line class="nld" />
+				<block class="nld karkat" ts-mode="one-line">
+					<line>WHAT&#8253; THEN WHY DID YOU<span class="ncd">..</span>. WHY</line>
+					<line>WOULD YOU<span class="ncd">..</span>. RRRRRRRGGGGHHHH...</line>
+				</block>
+				<line />
+				<block class="nld" ts-mode="one-line">
+					<line>He starts laughing his ass off</line>
+					<line>again.</line>
+				</block>
+			</text>
+			<user />
+			<text ts-only="1">
+				<hr />
+			</text>
+			<text ts-ignore="1">
+				<line>About an hour later...</line>
+			</text>
+			<user />
+			<text>
+				<block class="nld" ts-mode="one-line">
+<!--                                          xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -->
+					<line>Still growling at him </line>
+				</block>
+			</text>
+			<user />
+			<user />
+			<user />
+			<user />
+			<user />
+
+			<text class="i" ts-ignore="1">
+				<line>## END OF DEMO ##</line>
+				<line class="nld" />
+				<block class="nld" ts-mode="one-line">
+					<line>Feel free to give feedback over on</line>
+					<line>Discord. UI, color scheme, general</line>
+					<line>feel, "this was hard to use on my</line>
+					<line>phone"; every piece of feedback is</line>
+					<line>welcome.</line>
+				</block>
+				<line />
+				<line>-Mod E</line>
+			</text>
 		</block>
 	</flow>
 <!--

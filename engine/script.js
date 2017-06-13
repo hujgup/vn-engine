@@ -178,7 +178,7 @@ function FlowNode() {
 		throw new Error("Unimplemented abstract method \"skip\".");
 	};
 	this.setTimeout = function(callback,time) {
-		if (FlowNode.accelerate) {
+		if (FlowNode.accelerate || time <= 0) {
 			callback();
 		} else {
 			FlowNode.timeout = setTimeout(function() {
@@ -226,6 +226,23 @@ function WaitFlowNode(waitTime) {
 	};
 }
 inherit(WaitFlowNode,FlowNode);
+function HrFlowNode(width,classDef) {
+	FlowNode.call(this);
+	width = (Number.isNaN(width) || width < 2) ? 2 : width;
+	this.run = function(ctx,callback) {
+		console.log("[FLOW] Horizontal rule "+width+"px");
+		ctx.horizontalRule(classDef,width);
+		if (!FlowNode.accelerate) {
+			ctx.render();
+		}
+		this.setTimeout(callback,classDef.lineDelay);
+	};
+	this.skip = function(ctx,skipN) {
+		ctx.drawHorizontalRule(width);
+		return skipN;
+	};
+}
+inherit(HrFlowNode,FlowNode);
 function OpenTextFlowNode(x,y) {
 	FlowNode.call(this);
 	this.run = function(ctx,callback) {
@@ -242,13 +259,6 @@ function OpenTextFlowNode(x,y) {
 inherit(OpenTextFlowNode,FlowNode);
 function TextFlowNode(classDef) {
 	FlowNode.call(this);
-	this.delayCallback = function(callback,delay) {
-		if (delay > 0) {
-			this.setTimeout(callback,delay);
-		} else {
-			callback();
-		}
-	};
 	this.skip = function(ctx,skipN) {
 		return skipN;
 	};
@@ -268,7 +278,7 @@ function TextEndLineFlowNode(classDef) {
 	this.run = function(ctx,callback) {
 		console.log("[FLOW] Ending line");
 		ctx.endLine();
-		this.delayCallback(callback,classDef.lineDelay);
+		this.setTimeout(callback,classDef.lineDelay);
 	};
 }
 inherit(TextEndLineFlowNode,TextFlowNode);
@@ -279,7 +289,7 @@ function TextSpanFlowNode(text,classDef) {
 		if (!FlowNode.accelerate) {
 			ctx.render();
 		}
-		t.delayCallback(callback,classDef.getDelay(text,playhead));
+		t.setTimeout(callback,classDef.getDelay(text,playhead));
 	};
 	var _step = function(ctx,callback,i,t) {
 		if (text.length === 0) {
@@ -374,124 +384,141 @@ Flow.parse = function(xml,env) {
 		if (node.nodeType === Node.TEXT_NODE && opener && node.textContent.trim().length > 0) {
 			res.nodes.push(new TextSpanFlowNode(node.textContent,currentStyle));
 		} else if (node.nodeType === Node.ELEMENT_NODE) {
-			var currentNode = peek(nodeStack);
-			var classId = node.getAttribute("class");
-			var hasClass = classId !== null;
-			if (hasClass && opener) {
-				var ids = decodeEntities(classId).split(" ");
-				var classes = ids.map(function(id) {
-					if (!env.styling.classes.hasOwnProperty(id)) {
-						throw new Error("Class \""+classId+"\" is undefined.");
-					}
-					return env.styling.classes[id];
-				});
-				var newStyle = CascadingObject.multiUnion(unionCreateNew,classes);
-				if (currentStyle === env.styling.classes.default) {
-					// Override
-					currentStyle = newStyle;
-				} else {
-					// Union
-					currentStyle = CascadingObject.union(unionCreateNew,currentStyle,newStyle);
-				}
-				styleStack.push(currentStyle);
-				res.nodes.push(new SwitchStyleFlowNode(currentStyle));
-			}
-			if (opener) {
-				nodeStack.push(node);
+			if (node.getAttribute("ts-only") === "1") {
+				suppress = true;
 			} else {
-				nodeStack.pop();
-			}
-			switch (node.tagName) {
-				case "block":
-					if (opener) {
-						if (inLine) {
-							throw new Error("Block node cannot occur inside a line node.");
+				var currentNode = peek(nodeStack);
+				var classId = node.getAttribute("class");
+				var hasClass = classId !== null;
+				if (hasClass && opener) {
+					var ids = decodeEntities(classId).split(" ");
+					var classes = ids.map(function(id) {
+						if (!env.styling.classes.hasOwnProperty(id)) {
+							throw new Error("Class \""+classId+"\" is undefined.");
 						}
-						update(node,"x",x);
-						update(node,"y",y);
+						return env.styling.classes[id];
+					});
+					var newStyle = CascadingObject.multiUnion(unionCreateNew,classes);
+					if (currentStyle === env.styling.classes.default) {
+						// Override
+						currentStyle = newStyle;
 					} else {
-						revert(node,"x",x);
-						revert(node,"y",y);
+						// Union
+						currentStyle = CascadingObject.union(unionCreateNew,currentStyle,newStyle);
 					}
-					break;
-				case "wait":
-					if (opener) {
-						if (inText) {
-							throw new Error("Wait node cannot occur inside a text node.");
-						} else if (inLine) {
-							throw new Error("Wait node cannot occur inside a line node.");
-						}
-						res.nodes.push(new WaitFlowNode(parseInt(node.textContent)));
-						suppress = true;
-					}
-					break;
-				case "text":
-					if (inText) {
+					styleStack.push(currentStyle);
+					res.nodes.push(new SwitchStyleFlowNode(currentStyle));
+				}
+				if (opener) {
+					nodeStack.push(node);
+				} else {
+					nodeStack.pop();
+				}
+				switch (node.tagName) {
+					case "block":
 						if (opener) {
-							throw new Error("Cannot nest text nodes.");
+							if (inLine) {
+								throw new Error("Block node cannot occur inside a line node.");
+							}
+							update(node,"x",x);
+							update(node,"y",y);
 						} else {
-							inText = false;
+							revert(node,"x",x);
+							revert(node,"y",y);
 						}
-					} else if (opener) {
-						if (inLine) {
-							throw new Error("Text node cannot occur inside a line node.");
+						break;
+					case "wait":
+						if (opener) {
+							if (inText) {
+								throw new Error("Wait node cannot occur inside a text node.");
+							} else if (inLine) {
+								throw new Error("Wait node cannot occur inside a line node.");
+							} else if (node.children.length > 0) {
+								throw new Error("Wait nodes can have no element children.");
+							}
+							res.nodes.push(new WaitFlowNode(parseInt(node.textContent)));
+							suppress = true;
 						}
-						inText = true;
-						res.nodes.push(new OpenTextFlowNode(getCoord(node,"x",x),getCoord(node,"y",y)));
-					} else {
-						// ???
-						throw new Error("What the fuck have you done.");
-					}
-					break;
-				case "line":
-					if (opener) {
-						if (!inText) {
-							throw new Error("Line nodes must be inside text nodes.");
-						} else if (inLine) {
-							throw new Error("Line node cannot occur inside a line node.");
-						}
-						res.nodes.push(new TextStartLineFlowNode(currentStyle));
-						//line = new TextLineFlowNode(typeof node.textContent !== "undefined" ? decodeEntities(node.textContent) : "",currentStyle);
-						//res.nodes.push(line);
-						inLine = true;
-					} else {
-						res.nodes.push(new TextEndLineFlowNode(currentStyle));
-						inLine = false;
-					}
-					break;
-				case "span":
-					if (opener) {
-						if (!inLine) {
-							throw new Error("Span nodes must be inside line nodes.");
-						} else if (node.children.length > 0) {
-							throw new Error("Span nodes can have no element children.");
-						}
-						res.nodes.push(new TextSpanFlowNode(node.textContent,currentStyle));
-						suppress = true;
-					}
-					break;
-				case "user":
-					if (opener) {
+						break;
+					case "text":
 						if (inText) {
-							throw new Error("User node cannot occur inside a text node.");
-						} else if (inLine) {
-							throw new Error("User node cannot occur inside a line node.");
-						} else if (node.children.length > 0) {
-							throw new Error("User node can have no element children.");
-						} else if (node.textContent.length > 0) {
-							throw new Error("User node can have no text content.");
+							if (opener) {
+								throw new Error("Cannot nest text nodes.");
+							} else {
+								inText = false;
+							}
+						} else if (opener) {
+							if (inLine) {
+								throw new Error("Text node cannot occur inside a line node.");
+							}
+							inText = true;
+							res.nodes.push(new OpenTextFlowNode(getCoord(node,"x",x),getCoord(node,"y",y)));
+						} else {
+							// ???
+							throw new Error("What the fuck have you done.");
 						}
-						res.nodes.push(new UserFlowNode());
-						suppress = true;
-					}
-					break;
-				default:
-					throw new Error("Flow node \""+node.tagName+"\" is undefined.");
-			}
-			if (!opener && hasClass) {
-				styleStack.pop();
-				currentStyle = peek(styleStack);
-				res.nodes.push(new SwitchStyleFlowNode(currentStyle));
+						break;
+					case "line":
+						if (opener) {
+							if (!inText) {
+								throw new Error("Line nodes must be inside text nodes.");
+							} else if (inLine) {
+								throw new Error("Cannot nest line nodes.");
+							}
+							res.nodes.push(new TextStartLineFlowNode(currentStyle));
+							inLine = true;
+						} else {
+							res.nodes.push(new TextEndLineFlowNode(currentStyle));
+							inLine = false;
+						}
+						break;
+					case "span":
+						if (opener) {
+							if (!inLine) {
+								throw new Error("Span nodes must be inside line nodes.");
+							} else if (node.children.length > 0) {
+								throw new Error("Span nodes can have no element children.");
+							}
+							res.nodes.push(new TextSpanFlowNode(node.textContent,currentStyle));
+							suppress = true;
+						}
+						break;
+					case "hr":
+						if (opener) {
+							if (!inText) {
+								throw new Error("HR nodes must be inside text nodes.");
+							} else if (inLine) {
+								throw new Error("HR nodes cannot occur inside a line node.");
+							} else if (node.childNodes.length > 0) {
+								throw new Error("HR nodes can have no children of any kind.");
+							}
+							res.nodes.push(new HrFlowNode(parseInt(node.getAttribute("width")),currentStyle));
+							suppress = true;
+						}
+						break;
+					case "user":
+						if (opener) {
+							if (inText) {
+								throw new Error("User node cannot occur inside a text node.");
+							} else if (inLine) {
+								throw new Error("User node cannot occur inside a line node.");
+							} else if (node.childNodes.length > 0) {
+								throw new Error("User node can have no children of any kind.");
+							} else if (node.textContent.length > 0) {
+								throw new Error("User node can have no text content.");
+							}
+							res.nodes.push(new UserFlowNode());
+							suppress = true;
+						}
+						break;
+					default:
+						throw new Error("Flow node \""+node.tagName+"\" is undefined.");
+				}
+				if (!opener && hasClass) {
+					styleStack.pop();
+					currentStyle = peek(styleStack);
+					res.nodes.push(new SwitchStyleFlowNode(currentStyle));
+				}
 			}
 		}
 		return suppress;
@@ -504,7 +531,7 @@ function RenderableSegment(text,x,y,styling) {
 	this.x = x;
 	this.y = y;
 	this.styling = styling;
-	this.render = function(ctx,font) {
+	this.render = function(ctx,font,canvasWidth) {
 		var f2 = "";
 		if (this.styling.italics) {
 			f2 += "italic ";
@@ -515,10 +542,26 @@ function RenderableSegment(text,x,y,styling) {
 		f2 += font;
 		ctx.font = f2;
 		ctx.fillStyle = this.styling.color;
-		ctx.textAlign = this.styling.align;
 		ctx.fillText(this.text,this.x,this.y);
 	};
 }
+function HrRenderableSegment(y,width,styling) {
+	RenderableSegment.call(this,null,null,y,styling);
+	this.width = width;
+	this.render = function(ctx,font,canvasWidth) {
+		var oldSs = ctx.strokeStyle;
+		var oldLw = ctx.lineWidth;
+		ctx.strokeStyle = this.styling.color;
+		ctx.lineWidth = this.width;
+		ctx.beginPath();
+		ctx.moveTo(0,this.y);
+		ctx.lineTo(canvasWidth,this.y);
+		ctx.stroke();
+		ctx.strokeStyle = oldSs;
+		ctx.lineWidth = oldLw;
+	};
+}
+inherit(RenderableSegment,HrRenderableSegment);
 
 function TextRenderer(charWidth,charHeight,canvasWidth,canvasHeight,nextArrow,saveInd,accelLink,container,font) {
 	var _segments = [];
@@ -564,6 +607,12 @@ function TextRenderer(charWidth,charHeight,canvasWidth,canvasHeight,nextArrow,sa
 	this.pushText = function(text) {
 		_textBacklog += text;
 	};
+	this.horizontalRule = function(width) {
+		this.finish();
+		_segments.push(new HrRenderableSegment(_y,width,_textStyling));
+		_x = _initX;
+		_y += charHeight;
+	};
 	this.render = function(ctx) {
 		nextArrow.style.color = this.canvasStyling.linkColor;
 		saveInd.style.color = this.canvasStyling.linkColor;
@@ -576,11 +625,11 @@ function TextRenderer(charWidth,charHeight,canvasWidth,canvasHeight,nextArrow,sa
 		ctx.fillStyle = this.canvasStyling.bgColor;
 		ctx.fillRect(0,0,canvasWidth,canvasHeight);
 		_segments.forEach(function(segment) {
-			segment.render(ctx,font);
+			segment.render(ctx,font,canvasWidth);
 		});
 		if (_textBacklog.length > 0) {
 			var tempSegment = new RenderableSegment(_textBacklog,_x,_y,_textStyling);
-			tempSegment.render(ctx,font);
+			tempSegment.render(ctx,font,canvasWidth);
 		}
 	};
 }
@@ -588,14 +637,16 @@ function TextRenderer(charWidth,charHeight,canvasWidth,canvasHeight,nextArrow,sa
 function FlowContext(container,env,flow) {
 	document.title += " - "+env.title;
 	history.replaceState({},document.title,location.href);
-	var font = env.canvas.fontSize+"em "+"'Courier New',monospace";
+	var font = env.canvas.fontSize+"em 'Courier New',monospace";
 	var textSample = document.createElement("span");
 		textSample.className = "offscreen";
 		textSample.style.font = font;
+		textSample.style.color = "white";
 		textSample.textContent = "x";
 	document.body.appendChild(textSample);
-	var _width = textSample.clientWidth;
-	var _height = textSample.clientHeight;
+	var rect = textSample.getBoundingClientRect();
+	var _width = rect.width;
+	var _height = rect.height;
 	var _cWidth = _width*env.canvas.width*env.canvas.fontSize;
 	var _cHeight = _width*env.canvas.height*env.canvas.fontSize;
 	document.body.removeChild(textSample);
@@ -680,6 +731,11 @@ function FlowContext(container,env,flow) {
 	};
 	this.finish = function() {
 		_renderer.finish();
+	};
+	this.horizontalRule = function(styling,width) {
+		this.beginSpan(styling);
+		_renderer.horizontalRule(width);
+		this.endSpan();
 	};
 	this.render = function() {
 		_renderer.render(ctx);
